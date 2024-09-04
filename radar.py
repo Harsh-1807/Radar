@@ -260,7 +260,7 @@ def draw_realistic_wave(time_factor):
     graph_height = 300
     
     # Draw the graph boundaries
-    pygame.draw.rect(screen, WHITE, (graph_x, graph_y, graph_width, graph_height), 2)
+    pygame.draw.rect(screen, YELLOW, (graph_x, graph_y, graph_width, graph_height), 2)
     
     # Generate the wave data
     x = np.linspace(0, 20, graph_width)
@@ -284,8 +284,8 @@ def draw_realistic_wave(time_factor):
     
     font = pygame.font.SysFont("Terminal", 32)
     for i, line in enumerate(status_lines):
-        text_surface = font.render(line, True, WHITE)
-        screen.blit(text_surface, (graph_x, graph_y + graph_height + 10 + i * 30))
+        text_surface = font.render(line, True, FAINT_GREEN)
+        screen.blit(text_surface, (graph_x, graph_y + graph_height + 40 + i * 30))
     
     # Draw X and Y axis indexes
     axis_font = pygame.font.SysFont("Courier New", 22)
@@ -296,7 +296,7 @@ def draw_realistic_wave(time_factor):
     x_index_surface = axis_font.render(x_index, True, WHITE)
     y_index_surface = axis_font.render(y_index, True, WHITE)
     
-    screen.blit(x_index_surface, (graph_x + graph_width - 50, graph_y + graph_height + 30))
+    screen.blit(x_index_surface, (graph_x + graph_width - 160, graph_y + graph_height + 10))
     screen.blit(y_index_surface, (graph_x - 40, graph_y + graph_height // 2))
     
     # Display the maximum value as text
