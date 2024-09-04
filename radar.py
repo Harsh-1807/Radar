@@ -1,3 +1,4 @@
+import csv
 import pygame
 import math
 import random
@@ -45,7 +46,7 @@ RED = (255, 0, 0)
 radar_x, radar_y = 400, height // 2
 radar_radius = 200
 sweep_angle = 0
-sweep_speed = 0.05
+sweep_speed = 0.01
 
 # Objects settings (1 drone and 2 other objects)
 num_objects = 3
@@ -76,6 +77,14 @@ pygame.mixer.music.load("background.mp3")
 pygame.mixer.music.play(-1)  # Play background music in a loop
 last_email_sent_time = 0
 
+
+messages = [
+    "3 Blade Rotor drone detected",
+    "Quadcopter drone detected",
+    "Bionic drone detected",
+]
+detection_message_text = random.choice(messages)
+detection_message = header_font.render(detection_message_text, True, RED)
 
 def log_detection(timestamp, angle, x, y):
     # Calculate distance and speed
@@ -171,6 +180,8 @@ def draw_sweep_area(angle):
 def draw_objects(detected_drone=None, blink=True, graph_x=660, graph_y=200, graph_height=300):
     current_time = pygame.time.get_ticks()
     alpha = int((math.sin(current_time / 1000.0 * math.pi) + 1) / 2 * 255) if blink else 255
+    
+    
     for obj in objects:
         color = RED if obj == detected_drone else GREEN
         s = pygame.Surface((20, 20), pygame.SRCALPHA)
@@ -189,9 +200,14 @@ def draw_objects(detected_drone=None, blink=True, graph_x=660, graph_y=200, grap
     # Display the distance and speed on the screen
      screen.blit(distance_text, (graph_x, graph_y + graph_height - 260))
      screen.blit(speed_text, (graph_x, graph_y + graph_height - 280))
-     
+    
     # Render the "Drone detected" message
-     detection_message = header_font.render("Drone detected", True, RED)
+     # Randomly choose a message
+ 
+
+# Render the chosen message
+    
+    
     
     # Calculate the position to center the message on the screen
      message_x = (width - detection_message.get_width()) // 2
@@ -216,12 +232,12 @@ def draw_realistic_wave(time_factor):
     graph_y = 200
     graph_width = 500
     graph_height = 300
-    pygame.draw.rect(screen, DARK_GREEN, (graph_x, graph_y, graph_width, graph_height), 2)
+    pygame.draw.rect(screen, WHITE, (graph_x, graph_y, graph_width, graph_height), 2)
     x = np.linspace(0, 20, graph_width)
     y = generate_complex_wave(x, time_factor)
     scaled_y = graph_y + graph_height // 2 - (y / max(abs(y)) * (graph_height // 2)).astype(int)
     for i in range(len(scaled_y) - 1):
-        pygame.draw.line(screen, GREEN, (graph_x + i, scaled_y[i]), (graph_x + i + 1, scaled_y[i + 1]))
+        pygame.draw.line(screen, WHITE, (graph_x + i, scaled_y[i]), (graph_x + i + 1, scaled_y[i + 1]))
 
 # Main loop
 running = True
