@@ -60,7 +60,13 @@ pygame.mixer.music.load("background.mp3")
 pygame.mixer.music.play(-1)  # Play background music in a loop
 last_email_sent_time = 0
 
-'''def send_email_alert(timestamp, angle, x, y):
+def log_detection(timestamp, angle, x, y):
+    log_entry = f"{timestamp} - Angle: {angle:.2f}° - Latitude: {x:.2f} - Longitude: {y:.2f}\n"
+    with open("detection_log.txt", "a") as log_file:
+        log_file.write(log_entry)
+    print(log_entry)
+'''
+def send_email_alert(timestamp, angle, x, y):
     subject = "Alert: Drone Detected"
     body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f}"
     msg = MIMEText(body)
@@ -71,11 +77,13 @@ last_email_sent_time = 0
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('nkharshbachhav@gmail.com', 'nahi milega bc')
+            server.login('nkharshbachhav@gmail.com', 'no no no no')
             server.sendmail(msg['From'], [msg['To']], msg.as_string())
         print("Alert email sent successfully.")
+        log_detection(timestamp, angle, x, y)
     except Exception as e:
         print(f"Failed to send email: {e}")
+
 
 def threaded_email_alert(timestamp, angle, x, y):
     threading.Thread(target=send_email_alert, args=(timestamp, angle, x, y)).start()'''
@@ -144,6 +152,7 @@ def draw_realistic_wave(time_factor):
     max_amplitude = (y.max() - y.min()) / 2
     amp_text = digital_font.render(f"Max Amplitude: {max_amplitude:.2f}", True, GREEN)
     screen.blit(amp_text, (graph_x, graph_y + graph_height + 10))
+    # Render status lines
     status_lines = [
         "Processing radio signal...",
         "Status: OK",
@@ -154,6 +163,7 @@ def draw_realistic_wave(time_factor):
     for i, line in enumerate(status_lines):
         status_text = digital_font.render(line, True, FAINT_GREEN)
         screen.blit(status_text, (graph_x, graph_y + graph_height + 40 + i * 20))
+
 
 def draw_info():
     global last_email_sent_time
@@ -179,14 +189,14 @@ def draw_info():
         popup_x = width // 2 - detection_text.get_width() // 2
         popup_y = height // 2 - detection_text.get_height() // 2
         screen.blit(detection_text, (popup_x, popup_y))
-        #pygame.time.delay(200)
+       # pygame.time.delay(200)
         beep_sound.play()
 
         # Log drone detection and send email once per rotation
-       # current_time = pygame.time.get_ticks()
-       # if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
-           # threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
-            #last_email_sent_time = current_time
+       ''' current_time = pygame.time.get_ticks()
+        if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
+            threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
+            last_email_sent_time = current_time'''
 
     return detected_drone, not drone_detected
 
