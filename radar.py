@@ -144,6 +144,16 @@ def draw_realistic_wave(time_factor):
     max_amplitude = (y.max() - y.min()) / 2
     amp_text = digital_font.render(f"Max Amplitude: {max_amplitude:.2f}", True, GREEN)
     screen.blit(amp_text, (graph_x, graph_y + graph_height + 10))
+    status_lines = [
+        "Processing radio signal...",
+        "Status: OK",
+        "Generating Spectrogram image per 16 seconds...",
+        "Successful: Given to Model"
+    ]
+
+    for i, line in enumerate(status_lines):
+        status_text = digital_font.render(line, True, FAINT_GREEN)
+        screen.blit(status_text, (graph_x, graph_y + graph_height + 40 + i * 20))
 
 def draw_info():
     global last_email_sent_time
@@ -169,7 +179,7 @@ def draw_info():
         popup_x = width // 2 - detection_text.get_width() // 2
         popup_y = height // 2 - detection_text.get_height() // 2
         screen.blit(detection_text, (popup_x, popup_y))
-        pygame.time.delay(200)
+        #pygame.time.delay(200)
         beep_sound.play()
 
         # Log drone detection and send email once per rotation
