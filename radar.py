@@ -32,7 +32,12 @@ change_border_color(window_handle, color="#00ffff")  # Change Border Color
 
 # Set the window to be resizable (to show border effects)
 ctypes.windll.user32.SetWindowLongW(window_handle, ctypes.windll.user32.GetWindowLongW(window_handle, -16) | 0x00040000)
+'''logo_image = pygame.image.load('logo.png')  # Ensure 'logo.png' is in your working directory
+logo_width, logo_height = 200, 200  # Desired dimensions for the logo
+logo_image = pygame.transform.scale(logo_image, (logo_width, logo_height))
 
+# Position the logo
+logo_rect = logo_image.get_rect(topleft=(0, 0))'''
 # Colors
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
@@ -198,8 +203,8 @@ def draw_objects(detected_drone=None, blink=True, graph_x=660, graph_y=200, grap
      speed_text = digital_font.render(f"Speed: {obj_speed:.2f} km/h", True, RED)
     
     # Display the distance and speed on the screen
-     screen.blit(distance_text, (graph_x, graph_y + graph_height - 260))
-     screen.blit(speed_text, (graph_x, graph_y + graph_height - 280))
+     screen.blit(distance_text, (graph_x, graph_y + graph_height + 60))
+     screen.blit(speed_text, (graph_x, graph_y + graph_height + 80))
     
     # Render the "Drone detected" message
      # Randomly choose a message
@@ -227,6 +232,25 @@ def generate_complex_wave(x, time_factor):
     y += 10 * np.sin(0.1 * x + 0.1 * time_factor)
     return y
 
+
+def open_log_button(screen, x, y, width, height, button_text, font, button_color, text_color, log_file_path):
+    pygame.draw.rect(screen, button_color, (x, y, width, height))
+    text_surface = font.render(button_text, True, text_color)
+    text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
+    screen.blit(text_surface, text_rect)
+
+    # Check for mouse events
+    mouse_pos = pygame.mouse.get_pos()
+    mouse_click = pygame.mouse.get_pressed()
+
+    if (x <= mouse_pos[0] <= x + width and
+        y <= mouse_pos[1] <= y + height and
+        mouse_click[0] == 1):
+        if os.path.exists(log_file_path):
+            webbrowser.open(log_file_path)
+        else:
+            print("Log file does not exist.")
+
 def draw_realistic_wave(time_factor):
     graph_x = 660
     graph_y = 200
@@ -243,6 +267,12 @@ def draw_realistic_wave(time_factor):
 running = True
 clock = pygame.time.Clock()
 time_factor = 0
+font = pygame.font.Font(None, 36)
+button_color = (0, 128, 255)
+text_color = (255, 255, 255)
+
+# Path to the log file
+log_file_path = "detection_log.csv"
 
 while running:
     for event in pygame.event.get():
@@ -258,7 +288,7 @@ while running:
     draw_header()
     draw_radar_circle()
     draw_radar_lines()
-    
+    open_log_button(screen, 50, 50, 200, 50, "Open Log", font, button_color, text_color, log_file_path)
     sweep_angle += sweep_speed
     if sweep_angle > 2 * math.pi:
         sweep_angle -= 2 * math.pi
@@ -285,7 +315,7 @@ while running:
     draw_objects(detected_drone)
     draw_realistic_wave(time_factor)
     time_factor += 0.1
-
+   # screen.blit(logo_image, logo_rect)
     pygame.display.flip()
     clock.tick(60)
 
