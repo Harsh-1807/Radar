@@ -71,7 +71,7 @@ last_email_sent_time = 0
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('nkharshbachhav@gmail.com', 'qkbd smit xtqi qvoa')
+            server.login('nkharshbachhav@gmail.com', 'nahi milega bc')
             server.sendmail(msg['From'], [msg['To']], msg.as_string())
         print("Alert email sent successfully.")
     except Exception as e:
