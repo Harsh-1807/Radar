@@ -279,6 +279,7 @@ def draw_realistic_wave(time_factor):
         "Status: OK",
         "Generating Spectrogram image per 16 seconds...",
         "Successful: Given to Model"
+
     ]
     
     font = pygame.font.SysFont("Terminal", 32)
@@ -299,9 +300,105 @@ def draw_realistic_wave(time_factor):
     screen.blit(y_index_surface, (graph_x - 40, graph_y + graph_height // 2))
     
     # Display the maximum value as text
-    ffont = pygame.font.SysFont("OCR A Extended", 72)
+    ffont = pygame.font.SysFont("OCR A Extended", 32)
     max_value_text = ffont.render(f"Current Max Value: {max(y):.2f}", True, RED)
     screen.blit(max_value_text, (graph_x, graph_y - 80))
+
+
+
+
+def matrix_animation():
+    # Set up the matrix animation
+    char_list = "01"
+    columns = 120
+    rows = 40
+    font = pygame.font.SysFont("monospace", 15, bold=True)
+    
+    # Create a 2D array to store the character positions and velocities
+    char_positions = [[0 for _ in range(columns)] for _ in range(rows)]
+    char_velocities = [[random.uniform(1, 3) for _ in range(columns)] for _ in range(rows)]
+    
+    # Update the character positions and velocities
+    for i in range(rows):
+        for j in range(columns):
+            char_positions[i][j] += char_velocities[i][j]
+            if char_positions[i][j] > height:
+                char_positions[i][j] = random.randint(-50, 0)
+                char_velocities[i][j] = random.uniform(1, 3)
+    
+    # Draw the matrix animation
+    for i in range(rows):
+        for j in range(columns):
+            if char_positions[i][j] > 0:
+                x = j * 10
+                y = char_positions[i][j]
+                char = font.render(random.choice(char_list), True, (0, random.randint(100, 255), 0))
+                screen.blit(char, (x, y))
+
+def holographic_target_tracker(target_x, target_y, radius=50):
+    """
+    Draws a holographic target tracking effect.
+    
+    Args:
+        target_x (int): The x-coordinate of the target.
+        target_y (int): The y-coordinate of the target.
+        radius (int): The radius of the target (default: 50).
+    """
+    # Define the colors and transparency for the holographic effect
+    base_color = (0, 255, 255)
+    highlight_color = (255, 255, 0)
+    alpha = 100
+
+    # Draw the holographic target
+    for i in range(10):
+        size = radius + i * 10
+        color = base_color
+        if i % 2 == 0:
+            color = highlight_color
+        pygame.draw.circle(screen, (*color, alpha // (i + 1)), (target_x, target_y), size)
+
+    # Draw the target center
+    pygame.draw.circle(screen, (*highlight_color, alpha), (target_x, target_y), radius, 2)
+
+    # Draw the target direction lines
+    for angle in range(0, 360, 45):
+        rad = math.radians(angle)
+        x1 = target_x
+        y1 = target_y
+        x2 = target_x + math.cos(rad) * radius * 1.5
+        y2 = target_y + math.sin(rad) * radius * 1.5
+        pygame.draw.line(screen, (*base_color, alpha // 2), (x1, y1), (x2, y2), 2)
+
+    # Add a pulsing effect
+    pulse_radius = radius + math.sin(pygame.time.get_ticks() / 500) * 10
+    pygame.draw.circle(screen, (*highlight_color, alpha // 2), (target_x, target_y), pulse_radius, 2)
+
+def radar_scan_effect(center_x, center_y, radius, scan_angle, scan_speed, color=(0, 255, 255), alpha=100):
+    """
+    Draws an animated radar scan effect.
+    
+    Args:
+        center_x (int): The x-coordinate of the radar center.
+        center_y (int): The y-coordinate of the radar center.
+        radius (int): The radius of the radar.
+        scan_angle (float): The current angle of the scan line (in radians).
+        scan_speed (float): The speed of the scan line (in radians per second).
+        color (tuple): The RGB color of the scan line (default: (0, 255, 255)).
+        alpha (int): The transparency of the scan line (default: 100).
+    """
+    # Draw the scan line
+    x1 = center_x + math.cos(scan_angle) * radius
+    y1 = center_y + math.sin(scan_angle) * radius
+    x2 = center_x + math.cos(scan_angle + math.pi) * radius
+    y2 = center_y + math.sin(scan_angle + math.pi) * radius
+    pygame.draw.line(screen, (*color, alpha), (x1, y1), (x2, y2), 4)
+
+    # Update the scan angle
+    scan_angle += scan_speed
+    if scan_angle > 2 * math.pi:
+        scan_angle -= 2 * math.pi
+
+    return scan_angle
 
 
 
@@ -315,6 +412,8 @@ font = pygame.font.Font(None, 36)
 button_color = (0, 128, 255)
 text_color = (255, 255, 255)
 
+scan_angle = 0
+scan_speed = 0.01
 # Path to the log file
 log_file_path = "detection_log.csv"
 
@@ -331,6 +430,7 @@ while running:
     screen.fill(BLACK)
     draw_header()
     draw_radar_circle()
+    scan_angle = radar_scan_effect(radar_x, radar_y, radar_radius, scan_angle, scan_speed)
     draw_radar_lines()
     open_log_button(screen, 50, 50, 200, 50, "Open Log", font, button_color, text_color, log_file_path)
     sweep_angle += sweep_speed
@@ -358,6 +458,8 @@ while running:
 
     draw_objects(detected_drone)
     draw_realistic_wave(time_factor)
+    matrix_animation()
+    
     time_factor += 0.1
    # screen.blit(logo_image, logo_rect)
     pygame.display.flip()
