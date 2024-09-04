@@ -7,6 +7,8 @@ import pytz
 import smtplib
 from email.mime.text import MIMEText
 import threading
+import webbrowser
+
 
 # Initialize Pygame
 pygame.init()
@@ -65,8 +67,8 @@ def log_detection(timestamp, angle, x, y):
     with open("detection_log.txt", "a") as log_file:
         log_file.write(log_entry)
     print(log_entry)
-'''
-def send_email_alert(timestamp, angle, x, y):
+
+'''def send_email_alert(timestamp, angle, x, y):
     subject = "Alert: Drone Detected"
     body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f}"
     msg = MIMEText(body)
@@ -77,7 +79,7 @@ def send_email_alert(timestamp, angle, x, y):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('nkharshbachhav@gmail.com', 'no no no no')
+            server.login('nkharshbachhav@gmail.com', 'no no no')
             server.sendmail(msg['From'], [msg['To']], msg.as_string())
         print("Alert email sent successfully.")
         log_detection(timestamp, angle, x, y)
@@ -163,6 +165,25 @@ def draw_realistic_wave(time_factor):
     for i, line in enumerate(status_lines):
         status_text = digital_font.render(line, True, FAINT_GREEN)
         screen.blit(status_text, (graph_x, graph_y + graph_height + 40 + i * 20))
+def draw_button():
+    # Define font and color for button text
+    smallfont = pygame.font.SysFont('Corbel', 35)
+    color = (100, 100, 100)
+    
+    # Define button properties
+    mouse_pos = pygame.mouse.get_pos()
+    button_rect = pygame.Rect(width - 160, height - 60, 150, 50)
+    button_color = GREEN if button_rect.collidepoint(mouse_pos) else RED
+    
+    # Draw the button
+    pygame.draw.rect(screen, button_color, button_rect)
+    
+    # Render the button text
+    text = smallfont.render('Open Log', True, (255, 255, 255))
+    text_rect = text.get_rect(center=button_rect.center)
+    screen.blit(text, text_rect)
+    
+    return button_rect
 
 
 def draw_info():
@@ -192,8 +213,8 @@ def draw_info():
        # pygame.time.delay(200)
         beep_sound.play()
 
-        # Log drone detection and send email once per rotation
-       ''' current_time = pygame.time.get_ticks()
+        '''# Log drone detection and send email once per rotation
+        current_time = pygame.time.get_ticks()
         if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
             threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
             last_email_sent_time = current_time'''
@@ -207,6 +228,11 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            button_rect = draw_button()
+            if button_rect.collidepoint(mouse_pos):
+                webbrowser.open("detection_log.txt")
 
     screen.fill(BLACK)
     time_factor = pygame.time.get_ticks() / 1000
@@ -217,7 +243,7 @@ while running:
     detected_drone, blink = draw_info()  # Get blink status based on drone detection
     draw_objects(detected_drone, blink)
     draw_realistic_wave(time_factor)
-
+    draw_button()
     sweep_angle += sweep_speed
     if sweep_angle > 2 * math.pi:
         sweep_angle = 0
