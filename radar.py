@@ -60,7 +60,7 @@ pygame.mixer.music.load("background.mp3")
 pygame.mixer.music.play(-1)  # Play background music in a loop
 last_email_sent_time = 0
 
-def send_email_alert(timestamp, angle, x, y):
+'''def send_email_alert(timestamp, angle, x, y):
     subject = "Alert: Drone Detected"
     body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f}"
     msg = MIMEText(body)
@@ -78,7 +78,7 @@ def send_email_alert(timestamp, angle, x, y):
         print(f"Failed to send email: {e}")
 
 def threaded_email_alert(timestamp, angle, x, y):
-    threading.Thread(target=send_email_alert, args=(timestamp, angle, x, y)).start()
+    threading.Thread(target=send_email_alert, args=(timestamp, angle, x, y)).start()'''
 
 def draw_header():
     header_text = header_font.render("Drone/Bird Classifier", True, WHITE)
@@ -173,10 +173,10 @@ def draw_info():
         beep_sound.play()
 
         # Log drone detection and send email once per rotation
-        current_time = pygame.time.get_ticks()
-        if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
-            threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
-            last_email_sent_time = current_time
+       # current_time = pygame.time.get_ticks()
+       # if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
+           # threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
+            #last_email_sent_time = current_time
 
     return detected_drone, not drone_detected
 
