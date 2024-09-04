@@ -306,7 +306,6 @@ def draw_realistic_wave(time_factor):
 
 
 
-def matrix_animation():
    
 # Main loop
 running = True
