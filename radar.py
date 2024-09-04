@@ -3,13 +3,15 @@ import math
 import random
 import numpy as np
 import datetime
-import pytz
 import smtplib
 from email.mime.text import MIMEText
 import threading
 import webbrowser
-
-
+import ctypes
+from py_win_styles import apply_style, change_header_color, change_title_color, change_border_color, set_opacity
+from time_util import get_current_time, get_timezone_name
+import json
+import os
 # Initialize Pygame
 pygame.init()
 
@@ -17,6 +19,18 @@ pygame.init()
 width, height = 1200, 700
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Advanced Radar Simulation")
+
+# Get the Pygame window handle
+window_handle = pygame.display.get_wm_info()["window"]
+apply_style(window_handle, "aero")
+
+# Change the title bar, title text, and border color using pywinstyles
+change_header_color(window_handle, color="#00524d")  # Change Title Bar Color
+change_title_color(window_handle, color="white")     # Change Title Text Color
+change_border_color(window_handle, color="#00ffff")  # Change Border Color
+
+# Set the window to be resizable (to show border effects)
+ctypes.windll.user32.SetWindowLongW(window_handle, ctypes.windll.user32.GetWindowLongW(window_handle, -16) | 0x00040000)
 
 # Colors
 BLACK = (0, 0, 0)
@@ -62,13 +76,41 @@ pygame.mixer.music.load("background.mp3")
 pygame.mixer.music.play(-1)  # Play background music in a loop
 last_email_sent_time = 0
 
-def log_detection(timestamp, angle, x, y):
-    log_entry = f"{timestamp} - Angle: {angle:.2f}° - Latitude: {x:.2f} - Longitude: {y:.2f}\n"
-    with open("detection_log.txt", "a") as log_file:
-        log_file.write(log_entry)
-    print(log_entry)
 
-'''def send_email_alert(timestamp, angle, x, y):
+def log_detection(timestamp, angle, x, y):
+    # Calculate distance and speed
+    distance = math.hypot(x - radar_x, y - radar_y)
+    speed = distance / 0.7  # Placeholder value for speed; update based on your logic
+
+    # Define the CSV file path
+    csv_file = "detection_log.csv"
+    
+    # Check if the file exists
+    file_exists = os.path.exists(csv_file)
+
+    # Open the file in append mode
+    with open(csv_file, "a", newline='') as log_file:
+        fieldnames = ["timestamp", "angle", "latitude", "longitude", "distance", "speed"]
+        writer = csv.DictWriter(log_file, fieldnames=fieldnames)
+
+        # Write the header if the file is new
+        if not file_exists:
+            writer.writeheader()
+
+        # Write the log entry
+        log_entry = {
+            "timestamp": timestamp,
+            "angle": round(angle, 2),
+            "latitude": round(x, 2),
+            "longitude": round(y, 2),
+            "distance": round(distance, 2),
+            "speed": round(speed, 2)
+        }
+        writer.writerow(log_entry)
+
+    print(f"Logged entry: {log_entry}")
+
+def send_email_alert(timestamp, angle, x, y):
     subject = "Alert: Drone Detected"
     body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f}"
     msg = MIMEText(body)
@@ -79,20 +121,26 @@ def log_detection(timestamp, angle, x, y):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('nkharshbachhav@gmail.com', 'no no no')
+            server.login('nkharshbachhav@gmail.com', 'qkbd smit xtqi qvoa')  # Update with the correct password
             server.sendmail(msg['From'], [msg['To']], msg.as_string())
         print("Alert email sent successfully.")
         log_detection(timestamp, angle, x, y)
     except Exception as e:
         print(f"Failed to send email: {e}")
 
-
 def threaded_email_alert(timestamp, angle, x, y):
-    threading.Thread(target=send_email_alert, args=(timestamp, angle, x, y)).start()'''
+    threading.Thread(target=send_email_alert, args=(timestamp, angle, x, y)).start()
 
 def draw_header():
     header_text = header_font.render("Drone/Bird Classifier", True, WHITE)
     screen.blit(header_text, (width // 2 - header_text.get_width() // 2, 20))
+    
+    current_time = get_current_time()
+    timezone_name = get_timezone_name()
+    time_text = digital_font.render(f"Time: {current_time} ({timezone_name})", True, YELLOW)
+    
+    time_text_y = 20 + header_text.get_height() + 10
+    screen.blit(time_text, (width - time_text.get_width() - 20, time_text_y))
 
 def draw_radar_circle():
     pygame.draw.circle(screen, GREEN, (radar_x, radar_y), radar_radius + 10, 2)
@@ -120,7 +168,7 @@ def draw_sweep_area(angle):
     pygame.draw.polygon(s, FAINT_GREEN, points)
     screen.blit(s, (0, 0))
 
-def draw_objects(detected_drone=None, blink=True):
+def draw_objects(detected_drone=None, blink=True, graph_x=660, graph_y=200, graph_height=300):
     current_time = pygame.time.get_ticks()
     alpha = int((math.sin(current_time / 1000.0 * math.pi) + 1) / 2 * 255) if blink else 255
     for obj in objects:
@@ -128,6 +176,30 @@ def draw_objects(detected_drone=None, blink=True):
         s = pygame.Surface((20, 20), pygame.SRCALPHA)
         pygame.draw.circle(s, (*color[:3], alpha), (10, 10), 10)
         screen.blit(s, (int(obj[0]) - 10, int(obj[1]) - 10))
+    if detected_drone:
+     pygame.time.delay(100)        #################DELAY 
+     obj_x, obj_y, obj_type = detected_drone
+     obj_distance = math.hypot(obj_x - radar_x, obj_y - radar_y)
+     obj_speed = obj_distance / 0.7  # Placeholder value for speed; update based on your logic
+    
+    # Render the distance and speed text
+     distance_text = digital_font.render(f"Distance: {obj_distance:.2f}", True, RED)
+     speed_text = digital_font.render(f"Speed: {obj_speed:.2f} km/h", True, RED)
+    
+    # Display the distance and speed on the screen
+     screen.blit(distance_text, (graph_x, graph_y + graph_height - 260))
+     screen.blit(speed_text, (graph_x, graph_y + graph_height - 280))
+     
+    # Render the "Drone detected" message
+     detection_message = header_font.render("Drone detected", True, RED)
+    
+    # Calculate the position to center the message on the screen
+     message_x = (width - detection_message.get_width()) // 2
+     message_y = (height - detection_message.get_height()) // 2
+    
+    # Display the "Drone detected" message in the center of the screen
+     screen.blit(detection_message, (message_x, message_y))
+
 
 def generate_complex_wave(x, time_factor):
     y = 20 * np.sin(0.5 * x + time_factor)
@@ -147,108 +219,58 @@ def draw_realistic_wave(time_factor):
     pygame.draw.rect(screen, DARK_GREEN, (graph_x, graph_y, graph_width, graph_height), 2)
     x = np.linspace(0, 20, graph_width)
     y = generate_complex_wave(x, time_factor)
-    y_scaled = (y - y.min()) / (y.max() - y.min()) * graph_height
-    y_scaled = graph_height - y_scaled + graph_y
-    points = [(graph_x + i, int(y_scaled[i])) for i in range(graph_width)]
-    pygame.draw.lines(screen, WHITE, False, points, 2)
-    max_amplitude = (y.max() - y.min()) / 2
-    amp_text = digital_font.render(f"Max Amplitude: {max_amplitude:.2f}", True, GREEN)
-    screen.blit(amp_text, (graph_x, graph_y + graph_height + 10))
-    # Render status lines
-    status_lines = [
-        "Processing radio signal...",
-        "Status: OK",
-        "Generating Spectrogram image per 16 seconds...",
-        "Successful: Given to Model"
-    ]
+    scaled_y = graph_y + graph_height // 2 - (y / max(abs(y)) * (graph_height // 2)).astype(int)
+    for i in range(len(scaled_y) - 1):
+        pygame.draw.line(screen, GREEN, (graph_x + i, scaled_y[i]), (graph_x + i + 1, scaled_y[i + 1]))
 
-    for i, line in enumerate(status_lines):
-        status_text = digital_font.render(line, True, FAINT_GREEN)
-        screen.blit(status_text, (graph_x, graph_y + graph_height + 40 + i * 20))
-def draw_button():
-    # Define font and color for button text
-    smallfont = pygame.font.SysFont('Corbel', 35)
-    color = (100, 100, 100)
-    
-    # Define button properties
-    mouse_pos = pygame.mouse.get_pos()
-    button_rect = pygame.Rect(width - 160, height - 60, 150, 50)
-    button_color = GREEN if button_rect.collidepoint(mouse_pos) else RED
-    
-    # Draw the button
-    pygame.draw.rect(screen, button_color, button_rect)
-    
-    # Render the button text
-    text = smallfont.render('Open Log', True, (255, 255, 255))
-    text_rect = text.get_rect(center=button_rect.center)
-    screen.blit(text, text_rect)
-    
-    return button_rect
-
-
-def draw_info():
-    global last_email_sent_time
-    info_text = digital_font.render(f"Angle: {int(math.degrees(sweep_angle))}°", True, GREEN)
-    screen.blit(info_text, (10, 10))
-    drone_detected = False
-    detection_angle = 0
-    detected_drone = None
-
-    for obj in objects:
-        distance = math.sqrt((obj[0] - radar_x) ** 2 + (obj[1] - radar_y) ** 2)
-        if distance <= radar_radius:
-            relative_angle = math.atan2(obj[1] - radar_y, obj[0] - radar_x)
-            if abs(relative_angle - sweep_angle) % (2 * math.pi) <= math.pi / 6:
-                if obj[2] == "drone":
-                    drone_detected = True
-                    detection_angle = math.degrees(relative_angle)
-                    detected_drone = obj
-                    break
-
-    if drone_detected:
-        detection_text = digital_font.render(f"Drone Detected! Angle: {int(detection_angle)}°", True, YELLOW)
-        popup_x = width // 2 - detection_text.get_width() // 2
-        popup_y = height // 2 - detection_text.get_height() // 2
-        screen.blit(detection_text, (popup_x, popup_y))
-       # pygame.time.delay(200)
-        beep_sound.play()
-
-        '''# Log drone detection and send email once per rotation
-        current_time = pygame.time.get_ticks()
-        if current_time - last_email_sent_time > 2000:  # 2000 ms = 2 seconds, adjust as needed
-            threaded_email_alert(datetime.datetime.now(), detection_angle, detected_drone[0], detected_drone[1])
-            last_email_sent_time = current_time'''
-
-    return detected_drone, not drone_detected
-
+# Main loop
 running = True
 clock = pygame.time.Clock()
+time_factor = 0
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            mouse_pos = pygame.mouse.get_pos()
-            button_rect = draw_button()
-            if button_rect.collidepoint(mouse_pos):
-                webbrowser.open("detection_log.txt")
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                running = False
+            if event.key == pygame.K_m:
+                pygame.mixer.music.set_volume(0.5 if pygame.mixer.music.get_volume() > 0 else 1)
 
     screen.fill(BLACK)
-    time_factor = pygame.time.get_ticks() / 1000
     draw_header()
     draw_radar_circle()
     draw_radar_lines()
-    draw_sweep_area(sweep_angle)
-    detected_drone, blink = draw_info()  # Get blink status based on drone detection
-    draw_objects(detected_drone, blink)
-    draw_realistic_wave(time_factor)
-    draw_button()
+    
     sweep_angle += sweep_speed
     if sweep_angle > 2 * math.pi:
-        sweep_angle = 0
+        sweep_angle -= 2 * math.pi
+
+    draw_sweep_area(sweep_angle)
+    
+    detected_drone = None
+    for obj in objects:
+        obj_x, obj_y, obj_type = obj
+        angle_to_object = math.atan2(obj_y - radar_y, obj_x - radar_x)
+        if angle_to_object < 0:
+            angle_to_object += 2 * math.pi
+        angle_difference = abs(angle_to_object - sweep_angle)
+        if angle_difference < sweep_speed * 10 and obj_type == "drone":
+            detected_drone = obj
+            beep_sound.play()
+            current_time = pygame.time.get_ticks()
+            time_since_last_email = current_time - last_email_sent_time
+            if time_since_last_email > 10000:
+                timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                threaded_email_alert(timestamp, math.degrees(angle_to_object), obj_x, obj_y)
+                last_email_sent_time = current_time
+
+    draw_objects(detected_drone)
+    draw_realistic_wave(time_factor)
+    time_factor += 0.1
 
     pygame.display.flip()
-    clock.tick(30)
+    clock.tick(60)
 
 pygame.quit()
