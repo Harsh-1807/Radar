@@ -13,6 +13,10 @@ from py_win_styles import apply_style, change_header_color, change_title_color, 
 from time_util import get_current_time, get_timezone_name
 import json
 import os
+import random
+import string
+
+
 # Initialize Pygame
 pygame.init()
 
@@ -126,7 +130,7 @@ def log_detection(timestamp, angle, x, y):
 
 def send_email_alert(timestamp, angle, x, y):
     subject = "Alert: Drone Detected"
-    body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f}"
+    body = f"A drone was detected at {timestamp}. \n\nDetails:\nAngle: {angle:.2f}°\nLatitude: {x:.2f}\nLongitude: {y:.2f},\nDistance: {round(math.hypot(x - radar_x, y - radar_y), 2)} meters\nSpeed: {round(math.hypot(x - radar_x, y - radar_y) / 0.7, 2)} meters per second"
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = 'nkharshbachhav@gmail.com'
@@ -254,13 +258,56 @@ def draw_realistic_wave(time_factor):
     graph_y = 200
     graph_width = 500
     graph_height = 300
+    
+    # Draw the graph boundaries
     pygame.draw.rect(screen, WHITE, (graph_x, graph_y, graph_width, graph_height), 2)
+    
+    # Generate the wave data
     x = np.linspace(0, 20, graph_width)
     y = generate_complex_wave(x, time_factor)
+    
+    # Scale the wave data to fit the graph
     scaled_y = graph_y + graph_height // 2 - (y / max(abs(y)) * (graph_height // 2)).astype(int)
+    
+    # Draw the wave
     for i in range(len(scaled_y) - 1):
         pygame.draw.line(screen, WHITE, (graph_x + i, scaled_y[i]), (graph_x + i + 1, scaled_y[i + 1]))
+    
+    # Render status lines
+    status_lines = [
+        "Processing radio signal...",
+        "Status: OK",
+        "Generating Spectrogram image per 16 seconds...",
+        "Successful: Given to Model"
+    ]
+    
+    font = pygame.font.SysFont("Terminal", 32)
+    for i, line in enumerate(status_lines):
+        text_surface = font.render(line, True, WHITE)
+        screen.blit(text_surface, (graph_x, graph_y + graph_height + 10 + i * 30))
+    
+    # Draw X and Y axis indexes
+    axis_font = pygame.font.SysFont("Courier New", 22)
+    
+    x_index = "Time"
+    y_index = "Amp"
+    
+    x_index_surface = axis_font.render(x_index, True, WHITE)
+    y_index_surface = axis_font.render(y_index, True, WHITE)
+    
+    screen.blit(x_index_surface, (graph_x + graph_width - 50, graph_y + graph_height + 30))
+    screen.blit(y_index_surface, (graph_x - 40, graph_y + graph_height // 2))
+    
+    # Display the maximum value as text
+    ffont = pygame.font.SysFont("OCR A Extended", 72)
+    max_value_text = ffont.render(f"Current Max Value: {max(y):.2f}", True, RED)
+    screen.blit(max_value_text, (graph_x, graph_y - 80))
 
+
+
+
+def matrix_animation():
+   
 # Main loop
 running = True
 clock = pygame.time.Clock()
