@@ -12,7 +12,7 @@ def generate_html(csv_file_path):
     # Read the CSV file
     df = pd.read_csv(csv_file_path)
 
-    # Create a Plotly scatter plot
+    # Create a Plotly scatter plot with circular markers
     scatter_fig = px.scatter(
         df,
         x='latitude',
@@ -23,6 +23,14 @@ def generate_html(csv_file_path):
         title='Scatter Plot of Radar Detection',
         labels={'latitude': 'Latitude', 'longitude': 'Longitude', 'distance': 'Distance', 'speed': 'Speed'},
         color_continuous_scale=px.colors.sequential.Viridis
+    )
+    
+    # Update marker properties
+    scatter_fig.update_traces(
+        marker=dict(
+            size=10,  # Adjust the size for better visibility
+            symbol='circle'  # Use circle shape
+        )
     )
 
     # Create a Plotly bar chart for speeds
