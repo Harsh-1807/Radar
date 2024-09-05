@@ -139,7 +139,7 @@ def send_email_alert(timestamp, angle, x, y):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('nkharshbachhav@gmail.com', 'qkbd smit xtqi qvoa')  # Update with the correct password
+            server.login('nkharshbachhav@gmail.com', 'no')  # Update with the correct password
             server.sendmail(msg['From'], [msg['To']], msg.as_string())
         print("Alert email sent successfully.")
         log_detection(timestamp, angle, x, y)
